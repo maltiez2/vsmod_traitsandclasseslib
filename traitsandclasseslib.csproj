@@ -60,7 +60,6 @@
 
   <!-- Project item includes -->
   <ItemGroup>
-    <Folder Include="resources\assets\traitsandclasseslib" />
     <Folder Include="source\Utils\" />
   </ItemGroup>
 
@@ -98,6 +97,11 @@
     <Reference Include="$(GameDirectory)/Lib/OpenTK*.dll" Private="false" />
     <!-- External libraries -->
     <Reference Include="$(ExternalLibDir)/**/*.dll" Private="false" Condition="'$(ExternalLibDir)' != ''" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="resources\assets\**" />
+    <EmbeddedResource Remove="resources\assets\**" />
+    <None Remove="resources\assets\**" />
   </ItemGroup>
 
   <!-- Creating local settings file -->
