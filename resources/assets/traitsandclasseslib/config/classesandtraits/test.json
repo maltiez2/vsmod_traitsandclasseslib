@@ -7,6 +7,10 @@
 		{
 			"code": "test",
 			"order": 1
+		},
+		{
+			"code": "test-2",
+			"order": 1
 		}
   ],
 	"classes": [
@@ -25,8 +29,24 @@
 				{ "type": "item", "code": "game:clothes-face-hunter-mask" },
 				{ "type": "item", "code": "game:clothes-hand-hunter-gloves" }
 			]
+		},
+		{
+			"enabled": true,
+			"code": "hunter-2",
+			"category": "traitsandclasseslib:test-2",
+			"traits": ["game:focused", "traitsandclasseslib:focused"],
+			"gear": [
+				{ "type": "item", "code": "game:clothes-head-hunter-cape" },
+				{ "type": "item", "code": "game:clothes-shoulder-hunter-poncho" },
+				{ "type": "item", "code": "game:clothes-upperbody-hunter-shirt" },
+				{ "type": "item", "code": "game:clothes-upperbodyover-hunter-coat" },
+				{ "type": "item", "code": "game:clothes-lowerbody-hunter-leggings" },
+				{ "type": "item", "code": "game:clothes-foot-hunter-boots" },
+				{ "type": "item", "code": "game:clothes-face-hunter-mask" },
+				{ "type": "item", "code": "game:clothes-hand-hunter-gloves" }
+			]
 		}
-  ],
+	],
 	"traits": [
 		{
 			"code": "focused",

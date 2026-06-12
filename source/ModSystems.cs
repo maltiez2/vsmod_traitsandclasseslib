@@ -13,7 +13,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     public Dictionary<string, ExtendedTrait> Traits { get; private set; } = [];
     public Dictionary<string, PlayerTratis> PlayerTraitsCache { get; set; } = [];
 
-    public const string TratisAndClassesFolder = "config/traitsandclasseslib";
+    public const string TratisAndClassesFolder = "config/classesandtraits";
 
 
     public void RegisterClassCategory(ClassCategory category)
