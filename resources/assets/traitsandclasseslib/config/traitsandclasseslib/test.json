@@ -1,0 +1,43 @@
+{
+  "classCategories": [
+		{
+			"code": "vanilla",
+			"priority": 0
+		},
+		{
+			"code": "test",
+			"priority": 1
+		}
+  ],
+	"classes": [
+    {
+			"enabled": true,
+			"code": "hunter",
+			"category": "traitsandclasseslib:test",
+			"traits": ["game:focused", "traitsandclasseslib:focused"],
+			"gear": [
+				{ "type": "item", "code": "game:clothes-head-hunter-cape" },
+				{ "type": "item", "code": "game:clothes-shoulder-hunter-poncho" },
+				{ "type": "item", "code": "game:clothes-upperbody-hunter-shirt" },
+				{ "type": "item", "code": "game:clothes-upperbodyover-hunter-coat" },
+				{ "type": "item", "code": "game:clothes-lowerbody-hunter-leggings" },
+				{ "type": "item", "code": "game:clothes-foot-hunter-boots" },
+				{ "type": "item", "code": "game:clothes-face-hunter-mask" },
+				{ "type": "item", "code": "game:clothes-hand-hunter-gloves" }
+			]
+		}
+  ],
+	"traits": [
+		{
+			"code": "focused",
+			"type": "positive",
+			"persistsOnDeath": true,
+			"persistsOnWorldReload": true,
+			"attributes": {
+				"rangedWeaponsDamage": 0.2,
+				"rangedWeaponsAcc": 0.3,
+				"bowDrawingStrength": 0.2
+			}
+		}
+	]
+}

@@ -1,5 +1,4 @@
-﻿using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
+﻿using Vintagestory.GameContent;
 
 namespace TraitsAndClassesLib;
 
@@ -13,12 +12,19 @@ public class ExtendedTrait : Trait
 public class ClassCategory
 {
     public string Code { get; set; } = "";
-    public string Name { get; set; } = "";
-    public float Priority { get; set; } = 0;
+    public float Order { get; set; } = 0;
 }
 
 public class ExtendedCharacterClass : CharacterClass
 {
+    public string Category { get; set; } = "vanilla";
     public List<string> RequiredTraitsAndClasses { get; set; } = [];
     public List<string> ForbiddenTraitsAndClasses { get; set; } = [];
+}
+
+public class TraitsAndClassesFile
+{
+    public List<ClassCategory> ClassCategories { get; set; } = [];
+    public List<ExtendedCharacterClass> Classes { get; set; } = [];
+    public List<ExtendedTrait> Traits { get; set; } = [];
 }

@@ -18,7 +18,8 @@
 
   <!-- Dependencies -->
   <ItemGroup>
-    <Dependencies Include="game" Version="*" />
+    <Dependencies Include="playermodellib" Version="1.20.7" />
+    <Dependencies Include="overhaullib" Version="2.0.8" />
   </ItemGroup>
 
   <!-- Project settings -->
@@ -59,9 +60,6 @@
   </PropertyGroup>
 
   <!-- Project item includes -->
-  <ItemGroup>
-    <Folder Include="source\Utils\" />
-  </ItemGroup>
 
   <!-- Formatting JSON files -->
   <PropertyGroup>
@@ -97,11 +95,6 @@
     <Reference Include="$(GameDirectory)/Lib/OpenTK*.dll" Private="false" />
     <!-- External libraries -->
     <Reference Include="$(ExternalLibDir)/**/*.dll" Private="false" Condition="'$(ExternalLibDir)' != ''" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="resources\assets\**" />
-    <EmbeddedResource Remove="resources\assets\**" />
-    <None Remove="resources\assets\**" />
   </ItemGroup>
 
   <!-- Creating local settings file -->

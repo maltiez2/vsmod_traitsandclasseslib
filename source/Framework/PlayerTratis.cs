@@ -1,5 +1,4 @@
 ﻿using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
 
 namespace TraitsAndClassesLib;
 

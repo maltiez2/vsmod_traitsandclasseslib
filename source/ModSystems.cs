@@ -1,7 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using OverhaulLib.Utils;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
 
 namespace TraitsAndClassesLib;
 
@@ -11,21 +11,24 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     public List<ClassCategory> ClassesCategories { get; private set; } = [];
     public Dictionary<string, List<ExtendedCharacterClass>> Classes { get; private set; } = [];
     public Dictionary<string, ExtendedTrait> Traits { get; private set; } = [];
+    public Dictionary<string, PlayerTratis> PlayerTraitsCache { get; set; } = [];
+
+    public const string TratisAndClassesFolder = "config/traitsandclasseslib";
 
 
     public void RegisterClassCategory(ClassCategory category)
     {
         ClassesCategories.Add(category);
     }
-    public void RegisterClass(string category, ExtendedCharacterClass characterCLass)
+    public void RegisterClass(ExtendedCharacterClass characterCLass)
     {
-        if (Classes.TryGetValue(category, out List<ExtendedCharacterClass>? classes))
+        if (Classes.TryGetValue(characterCLass.Category, out List<ExtendedCharacterClass>? classes))
         {
             classes.Add(characterCLass);
         }
         else
         {
-            Classes[category] = [characterCLass];
+            Classes[characterCLass.Category] = [characterCLass];
         }
     }
     public void RegisterTrait(ExtendedTrait trait)
@@ -38,13 +41,101 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     {
         _api = api;
     }
-
     public override void AssetsFinalize(ICoreAPI api)
     {
+        LoadVanillaTraitsAndClasses(api);
+        LoadTraitsAndClassesFromAssets(api);
 
+        if (api is ICoreClientAPI clientApi)
+        {
+            ClassesCategories = ClassesCategories.OrderBy(category => category.Order).ToList();
+            ClassesTabsGui.Init(clientApi);
+        }
+    }
+    public override void Dispose()
+    {
+        ClassesTabsGui.Dispose();
     }
 
 
-    internal Dictionary<string, PlayerTratis> _playerTraitsCache = [];
+
     private ICoreAPI? _api;
+
+    private void LoadVanillaTraitsAndClasses(ICoreAPI api)
+    {
+
+    }
+    private void LoadVanillaClassesFromFile(ICoreAPI api, IAsset asset)
+    {
+        List<ExtendedCharacterClass>? playerClasses = ParsingUtils.LoadObjectFromFile<List<ExtendedCharacterClass>>(asset, _api, this);
+        if (playerClasses == null) return;
+        
+        foreach (ExtendedCharacterClass playerClass in playerClasses)
+        {
+            FillMissingDomains(asset.Location.Domain, playerClass);
+            RegisterClass(asset.Location.Domain, playerClass);
+        }
+    }
+    private void LoadVanillaTraitsFromFile(ICoreAPI api, IAsset asset)
+    {
+        List<ExtendedTrait>? traits = ParsingUtils.LoadObjectFromFile<List<ExtendedTrait>>(asset, _api, this);
+        if (traits == null) return;
+
+        foreach (ExtendedTrait trait in traits)
+        {
+            FillMissingDomains(asset.Location.Domain, trait);
+            RegisterTrait(asset.Location.Domain, trait);
+        }
+    }
+
+    private void LoadTraitsAndClassesFromAssets(ICoreAPI api)
+    {
+        List<IAsset> assets = api.Assets.GetMany(TratisAndClassesFolder);
+
+        foreach (IAsset asset in assets)
+        {
+            LoadTraitsAndClassesFromAsset(api, asset);
+        }
+    }
+    private void LoadTraitsAndClassesFromAsset(ICoreAPI api, IAsset asset)
+    {
+        TraitsAndClassesFile? fileConent = ParsingUtils.LoadObjectFromFile<TraitsAndClassesFile>(asset, _api, this);
+        if (fileConent == null) return;
+
+        foreach (ClassCategory category in fileConent.ClassCategories)
+        {
+            FillMissingDomains(asset.Location.Domain, category);
+            RegisterClassCategory(asset.Location.Domain, category);
+        }
+
+        foreach (ExtendedCharacterClass playerClass in fileConent.Classes)
+        {
+            FillMissingDomains(asset.Location.Domain, playerClass);
+            RegisterClass(asset.Location.Domain, playerClass);
+        }
+
+        foreach (ExtendedTrait trait in fileConent.Traits)
+        {
+            FillMissingDomains(asset.Location.Domain, trait);
+            RegisterTrait(asset.Location.Domain, trait);
+        }
+    }
+    private void FillMissingDomains(string domain, ClassCategory category)
+    {
+        category.Code = AddDomainIfMissing(category.Code, domain);
+    }
+    private void FillMissingDomains(string domain, ExtendedCharacterClass playerClass)
+    {
+        playerClass.Code = AddDomainIfMissing(playerClass.Code, domain);
+        playerClass.RequiredTraitsAndClasses = playerClass.RequiredTraitsAndClasses.Select(code => AddDomainIfMissing(code, domain)).ToList();
+        playerClass.ForbiddenTraitsAndClasses = playerClass.ForbiddenTraitsAndClasses.Select(code => AddDomainIfMissing(code, domain)).ToList();
+    }
+    private void FillMissingDomains(string domain, ExtendedTrait trait)
+    {
+        trait.Code = AddDomainIfMissing(trait.Code, domain);
+    }
+    private static string AddDomainIfMissing(string value, string domain)
+    {
+        return domain.Contains(':') ? value : domain + ":" + value;
+    }
 }

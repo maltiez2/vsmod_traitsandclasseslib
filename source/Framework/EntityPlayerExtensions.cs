@@ -1,4 +1,5 @@
-﻿using Vintagestory.API.Common;
+﻿using OverhaulLib.Utils;
+using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
 namespace TraitsAndClassesLib;
@@ -20,14 +21,14 @@ public static class EntityPlayerExtensions
             return PlayerTratis.FromAttributes(player.WatchedAttributes);
         }
 
-        if (system._playerTraitsCache.TryGetValue(player.PlayerUID, out PlayerTratis traits))
+        if (system.PlayerTraitsCache.TryGetValue(player.PlayerUID, out PlayerTratis traits))
         {
             return traits;
         }
         else
         {
             traits = PlayerTratis.FromAttributes(player.WatchedAttributes);
-            system._playerTraitsCache.Add(player.PlayerUID, traits);
+            system.PlayerTraitsCache.Add(player.PlayerUID, traits);
             return traits;
         }
     }
@@ -44,7 +45,7 @@ public static class EntityPlayerExtensions
 
         if (characterClass == null)
         {
-            LoggerUtil.Error(player.Api, typeof(EntityPlayerExtensions), $"Character class with code '{classCode}' not found when trying to apply class traits for player '{player.Player?.PlayerName ?? player.GetName()}'.");
+            Log.Error(player.Api, typeof(EntityPlayerExtensions), $"Character class with code '{classCode}' not found when trying to apply class traits for player '{player.Player?.PlayerName ?? player.GetName()}'.");
             return;
         }
 
