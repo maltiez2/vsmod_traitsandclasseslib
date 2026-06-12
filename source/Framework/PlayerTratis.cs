@@ -5,6 +5,9 @@ namespace TraitsAndClassesLib;
 
 public class PlayerTratis
 {
+    public const string AttributeCode = "traitCategories";
+
+
     public void AddTrait(string category, ExtendedTrait trait)
     {
         if (TraitsByCategories.TryGetValue(category, out List<ExtendedTrait>? traits))
@@ -92,17 +95,15 @@ public class PlayerTratis
     {
         TraitsByCategories.Clear();
 
-        if (tree["traitCategories"] is not TreeAttribute categoriesTree)
+        if (tree[AttributeCode] is not TreeAttribute categoriesTree)
         {
             RemoveTraitsOnReload();
             return;
         }
 
-        foreach (KeyValuePair<string, IAttribute> categoryEntry in categoriesTree)
+        foreach ((string category, IAttribute? categoryTree) in categoriesTree)
         {
-            string category = categoryEntry.Key;
-
-            if (categoryEntry.Value is not StringArrayAttribute traitCodes)
+            if (categoryTree is not StringArrayAttribute traitCodes)
             {
                 continue;
             }
@@ -144,7 +145,7 @@ public class PlayerTratis
             categoriesTree[category] = new StringArrayAttribute(codes);
         }
 
-        tree["traitCategories"] = categoriesTree;
+        tree[AttributeCode] = categoriesTree;
     }
 
     public static PlayerTratis FromAttributes(TreeAttribute tree, Dictionary<string, ExtendedTrait> traits)

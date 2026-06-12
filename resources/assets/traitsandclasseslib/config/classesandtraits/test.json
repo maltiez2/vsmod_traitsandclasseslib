@@ -35,6 +35,8 @@
 			"code": "hunter-2",
 			"category": "traitsandclasseslib:test-2",
 			"traits": ["game:focused", "traitsandclasseslib:focused"],
+			"requiredTraitsAndClasses": ["traitsandclasseslib:hunter"],
+			"forbiddenTraitsAndClasses": ["game:focused"],
 			"gear": [
 				{ "type": "item", "code": "game:clothes-head-hunter-cape" },
 				{ "type": "item", "code": "game:clothes-shoulder-hunter-poncho" },

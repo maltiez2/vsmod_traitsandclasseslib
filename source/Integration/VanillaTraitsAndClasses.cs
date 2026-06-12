@@ -10,7 +10,7 @@ using Vintagestory.GameContent;
 
 namespace TraitsAndClassesLib;
 
-/*public class CharacterSystem : ModSystem
+public class CharacterSystem : ModSystem
 {
     public List<CharacterClass> characterClasses = new List<CharacterClass>();
     public List<Trait> traits = new List<Trait>();
@@ -70,7 +70,7 @@ namespace TraitsAndClassesLib;
         api.Event.ServerRunPhase(EnumServerRunPhase.ModsAndConfigReady, loadCharacterClasses);
     }
 
-    public void setCharacterClass(EntityPlayer eplayer, string classCode, bool initializeGear = true)
+    public void SetCharacterClass(EntityPlayer eplayer, string classCode, bool initializeGear = true)
     {
         CharacterClass charclass = characterClasses.FirstOrDefault(c => c.Code == classCode);
         if (charclass == null) throw new ArgumentException("Not a valid character class code!");
@@ -623,7 +623,7 @@ namespace TraitsAndClassesLib;
 
         if (!didSelect)
         {
-            setCharacterClass(byPlayer.Entity, characterClasses[0].Code, false);
+            SetCharacterClass(byPlayer.Entity, characterClasses[0].Code, false);
         }
 
         var classChangeMonths = sapi.World.Config.GetDecimal("allowClassChangeAfterMonths", -1);
@@ -663,7 +663,7 @@ namespace TraitsAndClassesLib;
         {
             fromPlayer.SetModData<bool>("createCharacter", true);
 
-            setCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
+            SetCharacterClass(fromPlayer.Entity, p.CharacterClass, !didSelectBefore || fromPlayer.WorldData.CurrentGameMode == EnumGameMode.Creative);
 
             var bh = fromPlayer.Entity.GetBehavior<EntityBehaviorExtraSkinnable>();
             bh.ApplyVoice(p.VoiceType, p.VoicePitch, false);
@@ -689,4 +689,4 @@ namespace TraitsAndClassesLib;
         fromPlayer.Entity.WatchedAttributes.MarkPathDirty("skinConfig");
         fromPlayer.BroadcastPlayerData(true);
     }
-}*/
+}

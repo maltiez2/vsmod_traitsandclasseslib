@@ -12,8 +12,10 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     public Dictionary<string, List<ExtendedCharacterClass>> Classes { get; private set; } = [];
     public Dictionary<string, ExtendedTrait> Traits { get; private set; } = [];
     public Dictionary<string, PlayerTratis> PlayerTraitsCache { get; set; } = [];
+    public Dictionary<string, PlayerClasses> PlayerClassesCache { get; set; } = [];
 
     public const string TratisAndClassesFolder = "config/classesandtraits";
+    public const string ClassTraitsCategory = "from-character-class";
 
 
     public void RegisterClassCategory(ClassCategory category)
@@ -34,6 +36,23 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     public void RegisterTrait(ExtendedTrait trait)
     {
         Traits[trait.Code] = trait;
+    }
+    public void AddClassesTraits(PlayerTratis traits, PlayerClasses classes)
+    {
+        traits.RemoveAllTraits(ClassTraitsCategory);
+        foreach (ExtendedCharacterClass playerClass in classes.GetClasses())
+        {
+            foreach (string trait in playerClass.Traits)
+            {
+                if (!Traits.ContainsKey(trait))
+                {
+                    Log.Warn(_api, this, $"Unable to find trait with code '{trait}' specified in class '{playerClass.Code}'");
+                    continue;
+                }
+
+                traits.AddTrait(ClassTraitsCategory, Traits[trait]);
+            }
+        }
     }
 
 

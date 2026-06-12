@@ -1,5 +1,4 @@
-﻿using OverhaulLib.Utils;
-using Vintagestory.API.Common;
+﻿using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
 namespace TraitsAndClassesLib;
@@ -10,6 +9,17 @@ public static class EntityPlayerExtensions
     {
         PlayerTratis traits = player.GetPlayerTraits(system);
         return traits.GetTraits();
+    }
+    public static IEnumerable<ExtendedCharacterClass> GetClasses(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
+    {
+        PlayerClasses classes = player.GetPlayerClasses(system);
+        return classes.GetClasses();
+    }
+    public static IEnumerable<ExtendedTrait> GetExtraTraits(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
+    {
+        system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
+        string[] extraTraitsCodes = player.WatchedAttributes.GetStringArray("extraTraits") ?? [];
+        return extraTraitsCodes.Where(code => system.Traits.ContainsKey(code)).Select(code => system.Traits[code]);
     }
 
     public static PlayerTratis GetPlayerTraits(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
@@ -32,22 +42,36 @@ public static class EntityPlayerExtensions
             return traits;
         }
     }
-
-    public static void ApplyTraitsAttributes(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
+    public static PlayerClasses GetPlayerClasses(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
     {
         system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
 
-        CharacterSystem? characterSystem = player.Api.ModLoader.GetModSystem<CharacterSystem>();
-
-        string? classCode = player.WatchedAttributes.GetString("characterClass");
-        if (characterSystem == null || classCode == null || classCode == "") return;
-        CharacterClass? characterClass = characterSystem.characterClasses?.Find(c => c.Code == classCode);
-
-        if (characterClass == null)
+        if (system == null)
         {
-            Log.Error(player.Api, typeof(EntityPlayerExtensions), $"Character class with code '{classCode}' not found when trying to apply class traits for player '{player.Player?.PlayerName ?? player.GetName()}'.");
-            return;
+            return PlayerClasses.FromAttributes(player.WatchedAttributes);
         }
+
+        if (system.PlayerClassesCache.TryGetValue(player.PlayerUID, out PlayerClasses? playerClasses))
+        {
+            return playerClasses;
+        }
+        else
+        {
+            playerClasses = PlayerClasses.FromAttributes(player.WatchedAttributes);
+            system.PlayerClassesCache.Add(player.PlayerUID, playerClasses);
+            return playerClasses;
+        }
+    }
+
+    public static void UpdaitTraits(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
+    {
+        system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
+        ReaplyClassesTraits(player, system);
+        ApplyTraitsAttributes(player, system);
+    }
+    public static void ApplyTraitsAttributes(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
+    {
+        system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
 
         // Reset 
         foreach ((_, EntityFloatStats stats) in player.Stats)
@@ -62,16 +86,14 @@ public static class EntityPlayerExtensions
             }
         }
 
-        IEnumerable<string> libraryTraits = player.GetTraits(system).Select(trait => trait.Code);
-        string[] extraTraits = player.WatchedAttributes.GetStringArray("extraTraits") ?? [];
-        IEnumerable<string> allTraits = extraTraits == null ? characterClass.Traits : characterClass.Traits.Concat(libraryTraits).Concat(extraTraits).Distinct();
+        IEnumerable<ExtendedTrait> libraryTraits = player.GetTraits(system);
+        IEnumerable<ExtendedTrait> extraTraits = player.GetExtraTraits(system);
+        IEnumerable<ExtendedTrait> allTraits = libraryTraits.Concat(extraTraits).Distinct();
 
         // Aggregate stats values
         Dictionary<string, double> statValues = [];
-        foreach (string traitCode in allTraits)
+        foreach (ExtendedTrait trait in allTraits)
         {
-            if (!characterSystem.TraitsByCode.TryGetValue(traitCode, out Trait? trait)) continue;
-
             foreach ((string attributeCode, double attributeValue) in trait.Attributes)
             {
                 if (statValues.ContainsKey(attributeCode))
@@ -92,5 +114,18 @@ public static class EntityPlayerExtensions
         }
 
         player.GetBehavior<EntityBehaviorHealth>()?.MarkDirty();
+    }
+    public static void ReaplyClassesTraits(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
+    {
+        system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
+        if (system == null) return;
+
+        PlayerTratis traits = PlayerTratis.FromAttributes(player.WatchedAttributes);
+        PlayerClasses classes = PlayerClasses.FromAttributes(player.WatchedAttributes);
+
+        system.AddClassesTraits(traits, classes);
+
+        traits.WriteToAttributes(player.WatchedAttributes);
+        player.WatchedAttributes.MarkPathDirty(PlayerTratis.AttributeCode);
     }
 }
