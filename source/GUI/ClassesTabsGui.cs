@@ -37,7 +37,7 @@ public static class ClassesTabsGui
     private static void AddTabToDialog(GuiDialogCreateCustomCharacter dialog, ClassCategory category)
     {
         dialog.Tabs.Add(category.Code,
-            (ClassCategory category, GuiDialogCreateCustomCharacter dialog, GuiComposer composer, double yPosition, double padding, double slotSize, ElementBounds backgroundBounds, ElementBounds dialogBounds) =>
+            (GuiDialogCreateCustomCharacter dialog, GuiComposer composer, double yPosition, double padding, double slotSize, ElementBounds backgroundBounds, ElementBounds dialogBounds) =>
                 ComposeTab(category, dialog, composer, yPosition, padding, slotSize, backgroundBounds, dialogBounds));
         dialog.TabsEnabled.Add(category.Code, false);
     }

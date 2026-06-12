@@ -23,6 +23,6 @@ public static class Patches
 
     private static void CharacterSystem_HasTrait(CharacterSystem __instance, ref bool __result, IPlayer player, string trait)
     {
-        __result = __result || player.Entity.GetTraits().Any(trait => trait.Code == trait);
+        __result = __result || player.Entity.GetTraits().Any(playerTrait => playerTrait.Code == trait);
     }
 }

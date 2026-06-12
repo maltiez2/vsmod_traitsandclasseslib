@@ -2,11 +2,11 @@
   "classCategories": [
 		{
 			"code": "vanilla",
-			"priority": 0
+			"order": 0
 		},
 		{
 			"code": "test",
-			"priority": 1
+			"order": 1
 		}
   ],
 	"classes": [

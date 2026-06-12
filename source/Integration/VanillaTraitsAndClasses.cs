@@ -10,7 +10,7 @@ using Vintagestory.GameContent;
 
 namespace TraitsAndClassesLib;
 
-public class CharacterSystem : ModSystem
+/*public class CharacterSystem : ModSystem
 {
     public List<CharacterClass> characterClasses = new List<CharacterClass>();
     public List<Trait> traits = new List<Trait>();
@@ -689,4 +689,4 @@ public class CharacterSystem : ModSystem
         fromPlayer.Entity.WatchedAttributes.MarkPathDirty("skinConfig");
         fromPlayer.BroadcastPlayerData(true);
     }
-}
+}*/

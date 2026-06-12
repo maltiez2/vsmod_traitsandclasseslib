@@ -154,5 +154,13 @@ public class PlayerTratis
         return result;
     }
 
+    public static PlayerTratis FromAttributes(TreeAttribute tree)
+    {
+        PlayerTratis result = new();
+        Dictionary<string, ExtendedTrait> traits = [];
+        result.ReadFromAttributes(tree, traits);
+        return result;
+    }
+
     protected Dictionary<string, List<ExtendedTrait>> TraitsByCategories { get; set; } = [];
 }

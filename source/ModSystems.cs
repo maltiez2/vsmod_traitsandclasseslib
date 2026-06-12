@@ -63,17 +63,27 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
 
     private void LoadVanillaTraitsAndClasses(ICoreAPI api)
     {
+        List<IAsset> classesAssets = api.Assets.GetMany("config/characterclasses");
+        foreach (IAsset asset in classesAssets)
+        {
+            LoadVanillaClassesFromFile(api, asset);
+        }
 
+        List<IAsset> traitsAssets = api.Assets.GetMany("config/traits");
+        foreach (IAsset asset in traitsAssets)
+        {
+            LoadVanillaTraitsFromFile(api, asset);
+        }
     }
     private void LoadVanillaClassesFromFile(ICoreAPI api, IAsset asset)
     {
         List<ExtendedCharacterClass>? playerClasses = ParsingUtils.LoadObjectFromFile<List<ExtendedCharacterClass>>(asset, _api, this);
         if (playerClasses == null) return;
-        
+
         foreach (ExtendedCharacterClass playerClass in playerClasses)
         {
             FillMissingDomains(asset.Location.Domain, playerClass);
-            RegisterClass(asset.Location.Domain, playerClass);
+            RegisterClass(playerClass);
         }
     }
     private void LoadVanillaTraitsFromFile(ICoreAPI api, IAsset asset)
@@ -84,7 +94,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
         foreach (ExtendedTrait trait in traits)
         {
             FillMissingDomains(asset.Location.Domain, trait);
-            RegisterTrait(asset.Location.Domain, trait);
+            RegisterTrait(trait);
         }
     }
 
@@ -105,19 +115,19 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
         foreach (ClassCategory category in fileConent.ClassCategories)
         {
             FillMissingDomains(asset.Location.Domain, category);
-            RegisterClassCategory(asset.Location.Domain, category);
+            RegisterClassCategory(category);
         }
 
         foreach (ExtendedCharacterClass playerClass in fileConent.Classes)
         {
             FillMissingDomains(asset.Location.Domain, playerClass);
-            RegisterClass(asset.Location.Domain, playerClass);
+            RegisterClass(playerClass);
         }
 
         foreach (ExtendedTrait trait in fileConent.Traits)
         {
             FillMissingDomains(asset.Location.Domain, trait);
-            RegisterTrait(asset.Location.Domain, trait);
+            RegisterTrait(trait);
         }
     }
     private void FillMissingDomains(string domain, ClassCategory category)

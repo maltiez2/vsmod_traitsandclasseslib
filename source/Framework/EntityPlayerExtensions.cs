@@ -21,7 +21,7 @@ public static class EntityPlayerExtensions
             return PlayerTratis.FromAttributes(player.WatchedAttributes);
         }
 
-        if (system.PlayerTraitsCache.TryGetValue(player.PlayerUID, out PlayerTratis traits))
+        if (system.PlayerTraitsCache.TryGetValue(player.PlayerUID, out PlayerTratis? traits))
         {
             return traits;
         }
