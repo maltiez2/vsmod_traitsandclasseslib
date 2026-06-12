@@ -54,6 +54,15 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
             }
         }
     }
+    public JsonItemStack[] GetClassEquipment(PlayerClasses classes)
+    {
+        ExtendedCharacterClass? classWithGear = classes.GetClasses()
+            .Where(playerClass => playerClass.Gear != null && playerClass.Gear.Length > 0)
+            .OrderByDescending(playerClass => ClassesCategories.FirstOrDefault(category => category.Code == playerClass.Category)?.Order ?? 0)
+            .FirstOrDefault();
+
+        return classWithGear != null ? classWithGear.Gear : [];
+    }
 
 
     public override void Start(ICoreAPI api)

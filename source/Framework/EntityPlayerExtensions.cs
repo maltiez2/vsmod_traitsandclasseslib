@@ -128,4 +128,63 @@ public static class EntityPlayerExtensions
         traits.WriteToAttributes(player.WatchedAttributes);
         player.WatchedAttributes.MarkPathDirty(PlayerTratis.AttributeCode);
     }
+
+    public static void GiveClassEquipment(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
+    {
+        EntityBehaviorPlayerInventory? inventoryBehavior = player.GetBehavior<EntityBehaviorPlayerInventory>();
+        EntityShapeRenderer? renderer = player.Properties.Client.Renderer as EntityShapeRenderer;
+        system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
+        if (inventoryBehavior == null || renderer == null || system == null) return;
+
+        JsonItemStack[] gear = system.GetClassEquipment(player.GetPlayerClasses(system));
+        if (gear.Length == 0) return;
+
+        inventoryBehavior.doReloadShapeAndSkin = false;
+        InventoryBase? inventory = inventoryBehavior.Inventory;
+        if (inventory == null) return;
+
+        for (int i = 0; i < inventory.Count; i++)
+        {
+            if (i >= 12) break;
+            inventory[i].Itemstack = null;
+        }
+
+        foreach (JsonItemStack gearStack in gear)
+        {
+            if (!gearStack.Resolve(player.Api.World, "character class gear", false))
+            {
+                player.Api.World.Logger.Warning("Unable to resolve character class gear " + gearStack.Type + " with code " + gearStack.Code + " item/block does not seem to exist. Will ignore.");
+                continue;
+            }
+
+            ItemStack? stack = gearStack.ResolvedItemstack?.Clone();
+            if (stack == null) continue;
+
+            EnumCharacterDressType dressType = EnumCharacterDressType.Unknown;
+            if (stack.Collectible.GetCollectibleInterface<IWearableStatsSupplier>() is IWearableStatsSupplier wearableStats)
+            {
+                dressType = wearableStats.GetDressType(new DummySlot(stack));
+            }
+            else
+            {
+                string? strdress = stack.ItemAttributes["clothescategory"].AsString();
+                Enum.TryParse(strdress, true, out dressType);
+            }
+
+            if (dressType == EnumCharacterDressType.Unknown)
+            {
+                player.TryGiveItemStack(stack);
+                continue;
+            }
+
+            inventory[(int)dressType].Itemstack = stack;
+            inventory[(int)dressType].MarkDirty();
+        }
+
+        if (renderer != null)
+        {
+            inventoryBehavior.doReloadShapeAndSkin = true;
+            renderer.TesselateShape();
+        }
+    }
 }

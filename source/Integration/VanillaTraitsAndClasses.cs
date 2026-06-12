@@ -70,142 +70,10 @@ public class CharacterSystem : ModSystem
         api.Event.ServerRunPhase(EnumServerRunPhase.ModsAndConfigReady, loadCharacterClasses);
     }
 
-    public void SetCharacterClass(EntityPlayer eplayer, string classCode, bool initializeGear = true)
+    public void SetCharacterClass(EntityPlayer player, string classCode, bool initializeGear = true)
     {
-        CharacterClass charclass = characterClasses.FirstOrDefault(c => c.Code == classCode);
-        if (charclass == null) throw new ArgumentException("Not a valid character class code!");
-
-        eplayer.WatchedAttributes.SetString("characterClass", charclass.Code);
-
-        if (initializeGear)
-        {
-            var bh = eplayer.GetBehavior<EntityBehaviorPlayerInventory>();
-            var essr = capi?.World.Player.Entity.Properties.Client.Renderer as EntityShapeRenderer;
-
-            bh.doReloadShapeAndSkin = false;
-
-            IInventory inv = bh.Inventory;
-            if (inv != null)
-            {
-                for (int i = 0; i < inv.Count; i++)
-                {
-                    if (i >= 12) break;
-                    inv[i].Itemstack = null;
-                }
-
-                foreach (var jstack in charclass.Gear)
-                {
-                    if (!jstack.Resolve(api.World, "character class gear", false))
-                    {
-                        api.World.Logger.Warning("Unable to resolve character class gear " + jstack.Type + " with code " + jstack.Code + " item/block does not seem to exist. Will ignore.");
-                        continue;
-                    }
-
-                    ItemStack stack = jstack.ResolvedItemstack?.Clone();
-                    if (stack == null) continue;
-
-                    EnumCharacterDressType dressType = EnumCharacterDressType.Unknown;
-                    if (stack.Collectible.GetCollectibleInterface<IWearableStatsSupplier>() is IWearableStatsSupplier wearableStats)
-                    {
-                        dressType = wearableStats.GetDressType(new DummySlot(stack));
-                    }
-                    else
-                    {
-                        string strdress = stack.ItemAttributes["clothescategory"].AsString();
-                        Enum.TryParse(strdress, true, out dressType);
-                    }
-
-                    if (dressType == EnumCharacterDressType.Unknown)
-                    {
-                        eplayer.TryGiveItemStack(stack);
-                        continue;
-                    }
-
-                    inv[(int)dressType].Itemstack = stack;
-                    inv[(int)dressType].MarkDirty();
-                }
-
-                if (essr != null)
-                {
-                    bh.doReloadShapeAndSkin = true;
-                    essr.TesselateShape();
-                }
-            }
-        }
-
-        applyTraitAttributes(eplayer);
-    }
-
-    public bool HasTrait(IPlayer player, string trait)
-    {
-        string classcode = player.Entity.WatchedAttributes.GetString("characterClass");
-        if (classcode == null) return true;
-
-        if (characterClassesByCode.TryGetValue(classcode, out CharacterClass charclass))
-        {
-            if (charclass.Traits.Contains(trait)) return true;
-
-            string[] extraTraits = player.Entity.WatchedAttributes.GetStringArray("extraTraits");
-            if (extraTraits != null && extraTraits.Contains(trait)) return true;
-        }
-
-        return false;
-    }
-
-    public bool randomizeSkin(Entity entity, Dictionary<string, string> preSelection, bool playVoice = true)
-    {
-        if (preSelection == null) preSelection = new Dictionary<string, string>();
-
-        var skinMod = entity.GetBehavior<EntityBehaviorExtraSkinnable>();
-
-        bool mustached = api.World.Rand.NextDouble() < 0.3;
-
-        Dictionary<string, RandomizerConstraint> currentConstraints = new Dictionary<string, RandomizerConstraint>();
-
-        foreach (var skinpart in skinMod.AvailableSkinParts)
-        {
-            var variants = skinpart.Variants.Where(v => v.Category == "standard").ToArray();
-
-            int index = api.World.Rand.Next(variants.Length);
-
-            if (preSelection.TryGetValue(skinpart.Code, out string variantCode))
-            {
-                index = variants.IndexOf(val => val.Code == variantCode);
-            }
-            else
-            {
-                if (currentConstraints.TryGetValue(skinpart.Code, out var partConstraints))
-                {
-                    variantCode = partConstraints.SelectRandom(api.World.Rand, variants);
-                    index = variants.IndexOf(val => val.Code == variantCode);
-                }
-
-                if ((skinpart.Code == "mustache" || skinpart.Code == "beard") && !mustached)
-                {
-                    index = 0;
-                    variantCode = "none";
-                }
-            }
-
-            if (variantCode == null) variantCode = variants[index].Code;
-
-            skinMod.selectSkinPart(skinpart.Code, variantCode, true, playVoice);
-
-            if (randomizerConstraints.Constraints.TryGetValue(skinpart.Code, out var partConstraintsGroup))
-            {
-                if (partConstraintsGroup.TryGetValue(variantCode, out var constraints))
-                {
-                    foreach (var val in constraints)
-                    {
-                        currentConstraints[val.Key] = val.Value;
-                    }
-                }
-            }
-
-            if (skinpart.Code == "voicetype" && variantCode == "high") mustached = false;
-        }
-
-        return true;
+        if (initializeGear) player.GiveClassEquipment();
+        player.UpdaitTraits();
     }
 
     public void ClientSelectionDone(IInventory characterInv, string characterClass, bool didSelect)
@@ -250,33 +118,6 @@ public class CharacterSystem : ModSystem
 
         capi.Event.PushEvent("finishcharacterselection");
     }
-
-    public Dictionary<string, string> getPreviousSelection()
-    {
-        Dictionary<string, string> lastSelection = new Dictionary<string, string>();
-        if (capi == null || !capi.Settings.String.Exists("lastSkinSelection")) return lastSelection;
-
-        var lastSele = capi.Settings.String["lastSkinSelection"];
-        var parts = lastSele.Split(",");
-        foreach (var part in parts)
-        {
-            var keyval = part.Split(":");
-            lastSelection[keyval[0]] = keyval[1];
-        }
-        return lastSelection;
-    }
-
-    public void storePreviousSelection(Dictionary<string, string> selection)
-    {
-        List<string> parts = new List<string>();
-        foreach (var val in selection)
-        {
-            parts.Add(val.Key + ":" + val.Value);
-        }
-
-        capi.Settings.String["lastSkinSelection"] = string.Join(",", parts);
-    }
-
 
 
     private ICoreAPI? api;
