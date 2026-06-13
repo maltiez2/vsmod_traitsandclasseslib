@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <!-- Mod info -->
   <PropertyGroup>
-    <ModName>traitsandclasseslib</ModName>
+    <ModName>Traits And Classes lib</ModName>
     <ModType>code</ModType>
-    <ModVersion>0.0.0</ModVersion>
+    <ModVersion>0.0.1</ModVersion>
     <ModId>traitsandclasseslib</ModId>
     <Description></Description>
     <Side>universal</Side>
@@ -13,13 +13,13 @@
 
   <!-- Authors -->
   <ItemGroup>
-    <ModInfoAuthors Include="Author" />
+    <ModInfoAuthors Include="Maltiez" />
   </ItemGroup>
 
   <!-- Dependencies -->
   <ItemGroup>
-    <Dependencies Include="playermodellib" Version="1.20.7" />
-    <Dependencies Include="overhaullib" Version="2.0.8" />
+    <Dependencies Include="playermodellib" Version="1.21.0" />
+    <Dependencies Include="overhaullib" Version="2.0.9" />
   </ItemGroup>
 
   <!-- Project settings -->
@@ -95,9 +95,6 @@
     <Reference Include="$(GameDirectory)/Lib/OpenTK*.dll" Private="false" />
     <!-- External libraries -->
     <Reference Include="$(ExternalLibDir)/**/*.dll" Private="false" Condition="'$(ExternalLibDir)' != ''" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="resources\assets\traitsandclasseslib\config\classesandtraits\" />
   </ItemGroup>
 
   <!-- Creating local settings file -->

@@ -138,6 +138,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
 
         foreach (ExtendedCharacterClass playerClass in playerClasses)
         {
+            if (!playerClass.Enabled) continue;
             playerClass.Category = ClassCategory.VanillaCategoryCode;
             FillMissingDomains(asset.Location.Domain, playerClass);
             RegisterClass(playerClass);
@@ -177,6 +178,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
 
         foreach (ExtendedCharacterClass playerClass in fileConent.Classes)
         {
+            if (!playerClass.Enabled) continue;
             FillMissingDomains(asset.Location.Domain, playerClass);
             RegisterClass(playerClass);
         }

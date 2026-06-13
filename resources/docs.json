@@ -1,0 +1,34 @@
+{
+  // Player will be able to select only one class from each category
+	"classCategories": [
+		{
+			// category with no currently avaiable classes will be hidden
+			"code": "mycategory", // category code, including domain; if domain is missing, asset domain will be added
+			"order": 0 // order in which categories follow, vanilla is always 0
+		}
+  ],
+	"classes": [
+		{
+			"enabled": false, // use to disable
+			"code": "myclass", // class code, including domain; if domain is missing, asset domain will be added
+			"category": "game:vanilla", // category of this class; if domain is missing, asset domain will be added
+			"requiredTraitsAndClasses": ["anothermod:another-class", "game:hunter"], // if specified, player should have these classes or traits present to be able to select this class; only traits and classes from previous categories count
+			"forbiddenTraitsAndClasses": ["anothermod:yet-another-class", "game:resourcefull"], // same as requiredTraitsAndClasses but inverted
+			// if none of requiredTraitsAndClasses and forbiddenTraitsAndClasses specified, class if always available
+			"traits": ["resourceful", "game:forager"], // same as vanilla classes
+			"gear": [],// same as vanilla classes; only gear from last category that have it specified will be used
+			"additionalGear": [] // same as 'gear', but will be added to player regardless of other gear and wont be overriden
+		}
+	],
+	"traits": [
+		{
+			"code": "resourceful", // trait code, including domain; if domain is missing, asset domain will be added
+			"type": "positive", // same as vanilla
+			"persistsOnDeath": true, // if set to false, will be removed from player on death, use this field in cases when you give it to player programmatically, setting it to false for classes will result in undefined behavior
+			"persistsOnWorldReload": true, // if set to false, will be removed from player on death, use this field cases when you give it to player programmatically, setting it to false for classes will result in undefined behavior
+			"attributes": { // same as vanilla
+				"animalLootDropRate": 0.1 // same as vanilla
+			}
+		}
+	]
+}
