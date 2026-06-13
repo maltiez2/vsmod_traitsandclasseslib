@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using OverhaulLib.Utils;
+using ProtoBuf;
 using System.Diagnostics;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -81,8 +82,6 @@ public sealed class ClassesSynchronisationSystemServer
 
     private void SetClassPacketHandler(IServerPlayer player, SetClassPacket packet)
     {
-        Debug.WriteLine("Received SetClassPacket");
-
         TraitsAndClassesLibSystem? system = _api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
         if (system == null || player.Entity == null || player.Entity.EntityId != packet.PlayerEntityId) return;
 

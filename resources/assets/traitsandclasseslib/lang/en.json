@@ -12,5 +12,7 @@
   "game:characterclass-traitsandclasseslib-c-6": "C-6",
   "game:characterclass-traitsandclasseslib-c-7": "C-7",
   "game:characterclass-traitsandclasseslib-c-8": "C-8",
-  "game:characterclass-traitsandclasseslib-c-9": "C-9"
+  "game:characterclass-traitsandclasseslib-c-9": "C-9",
+
+  "game:characterdialog-title-nameandclass": "{0}"
 }

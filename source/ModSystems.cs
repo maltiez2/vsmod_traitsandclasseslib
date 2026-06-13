@@ -1,5 +1,5 @@
 ﻿using OverhaulLib.Utils;
-using ProperVersion;
+using PlayerModelLib;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
@@ -83,6 +83,8 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     public override void Start(ICoreAPI api)
     {
         _api = api;
+        Patches.Patch(api);
+        OtherPatches.SelectClassOnSelection = false;
     }
     public override void StartClientSide(ICoreClientAPI api)
     {
@@ -106,6 +108,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     public override void Dispose()
     {
         ClassesTabsGui.Dispose();
+        Patches.Unpatch();
     }
 
 

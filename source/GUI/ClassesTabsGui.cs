@@ -16,10 +16,17 @@ public static class ClassesTabsGui
         _api = api;
         GuiDialogCreateCustomCharacter.OnCreated += OnDialogCreated;
         GuiDialogCreateCustomCharacter.BeforeComposed += BeforeDialogComposed;
+        GuiDialogCreateCustomCharacter.OnConfirmed += OnConfirmed;
+        OtherPatches.OnGetTraitsText += OnGetTraitsText;
     }
 
     public static void Dispose()
     {
+        GuiDialogCreateCustomCharacter.OnCreated -= OnDialogCreated;
+        GuiDialogCreateCustomCharacter.BeforeComposed -= BeforeDialogComposed;
+        GuiDialogCreateCustomCharacter.OnConfirmed -= OnConfirmed;
+        OtherPatches.OnGetTraitsText -= OnGetTraitsText;
+
         _api = null;
     }
 
@@ -43,6 +50,16 @@ public static class ClassesTabsGui
 
         dialog.Api.World.Player.Entity.GetPlayerClasses().WriteToAttributes(_currentSelection);
         dialog.Api.World.Player.Entity.GetPlayerTraits().WriteToAttributes(_currentSelection);
+    }
+
+    private static void OnConfirmed(GuiDialogCreateCustomCharacter dialog)
+    {
+        TraitsAndClassesLibSystem? system = _api?.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
+        if (system == null) return;
+
+        EntityPlayer player = dialog.Api.World.Player.Entity;
+        PlayerClasses playerClasses = PlayerClasses.FromAttributes(_currentSelection, system);
+        system.SetPlayerClass(player, playerClasses, giveClassEquipment: true);
     }
 
     private static void AddTabToDialog(GuiDialogCreateCustomCharacter dialog, ClassCategory category)
@@ -85,7 +102,7 @@ public static class ClassesTabsGui
 
         composer
             .AddInset(dialog.InsetSlotBounds, 2)
-            .AddIconButton("left", (on) => ChangeClass(category, dialog , - 1), prevButtonBounds.FlatCopy())
+            .AddIconButton("left", (on) => ChangeClass(category, dialog, -1), prevButtonBounds.FlatCopy())
             .AddInset(charclasssInset, 2)
             .AddDynamicText("Commoner", font.Clone().WithOrientation(EnumTextOrientation.Center), centerTextBounds, "className")
             .AddIconButton("right", (on) => ChangeClass(category, dialog, 1), nextButtonBounds.FlatCopy())
@@ -189,7 +206,10 @@ public static class ClassesTabsGui
         );
         dialog.Composer?.GetScrollbar("scrollbar")?.SetScrollbarPosition(0);
 
-        system.SetPlayerClass(player, playerClasses, giveClassEquipment: true);
+        //system.SetPlayerClass(player, playerClasses, giveClassEquipment: true);
+
+        playerClasses.WriteToAttributes(player.WatchedAttributes);
+        player.GiveClassEquipment(system);
 
         dialog.ReTesselate();
     }
@@ -329,5 +349,58 @@ public static class ClassesTabsGui
         }
 
         return true;
+    }
+
+    private static void OnGetTraitsText(CharacterSystem system, ref string result, ref bool handled)
+    {
+        EntityPlayer? player = _api?.World.Player.Entity;
+        if (player == null) return;
+
+        IEnumerable<ExtendedTrait> playerTraits = player.GetTraits();
+        IEnumerable<ExtendedTrait> extraTraits = player.GetExtraTraits();
+
+        StringBuilder fullDescription = new();
+        PrintTraitsDescription(playerTraits.Concat(extraTraits), fullDescription);
+        result = fullDescription.ToString();
+
+        handled = true;
+    }
+
+    private static void PrintTraitsDescription(IEnumerable<ExtendedTrait> traits, StringBuilder fullDescription)
+    {
+        StringBuilder attributes = new();
+
+
+        foreach (ExtendedTrait trait in traits)
+        {
+            attributes.Clear();
+            foreach ((string attribute, double attributeValue) in trait.Attributes)
+            {
+                if (attributes.Length > 0) attributes.Append(", ");
+                attributes.Append(GuiDialogCreateCustomCharacter.GetAttributeDescription(attribute, attributeValue));
+            }
+
+            if (attributes.Length > 0)
+            {
+                fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + GuiDialogCreateCustomCharacter.ProcessDomainForLang(trait.Code)), attributes));
+            }
+            else
+            {
+                string? traitDescription = Lang.GetIfExists("traitdesc-" + trait.Code);
+                if (traitDescription != null)
+                {
+                    fullDescription.AppendLine(Lang.Get("traitwithattributes", Lang.Get("trait-" + GuiDialogCreateCustomCharacter.ProcessDomainForLang(trait.Code)), traitDescription));
+                }
+                else
+                {
+                    fullDescription.AppendLine(Lang.Get("trait-" + GuiDialogCreateCustomCharacter.ProcessDomainForLang(trait.Code)));
+                }
+            }
+        }
+
+        if (!traits.Any())
+        {
+            fullDescription.AppendLine(Lang.Get("No positive or negative traits"));
+        }
     }
 }

@@ -31,6 +31,8 @@ public static class EntityPlayerExtensions
             return PlayerTratis.FromAttributes(player.WatchedAttributes, []);
         }
 
+        return PlayerTratis.FromAttributes(player.WatchedAttributes, system.Traits);
+
         if (system.PlayerTraitsCache.TryGetValue(player.PlayerUID, out PlayerTratis? traits))
         {
             return traits;
@@ -51,6 +53,8 @@ public static class EntityPlayerExtensions
             return PlayerClasses.FromAttributes(player.WatchedAttributes, []);
         }
 
+        return PlayerClasses.FromAttributes(player.WatchedAttributes, system.Classes);
+
         if (system.PlayerClassesCache.TryGetValue(player.PlayerUID, out PlayerClasses? playerClasses))
         {
             return playerClasses;
@@ -58,7 +62,6 @@ public static class EntityPlayerExtensions
         else
         {
             playerClasses = PlayerClasses.FromAttributes(player.WatchedAttributes, system.Classes);
-            system.PlayerClassesCache.Add(player.PlayerUID, playerClasses);
             return playerClasses;
         }
     }
@@ -134,7 +137,7 @@ public static class EntityPlayerExtensions
         EntityBehaviorPlayerInventory? inventoryBehavior = player.GetBehavior<EntityBehaviorPlayerInventory>();
         EntityShapeRenderer? renderer = player.Properties.Client.Renderer as EntityShapeRenderer;
         system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
-        if (inventoryBehavior == null || renderer == null || system == null) return;
+        if (inventoryBehavior == null || system == null) return;
 
         IEnumerable<JsonItemStack> gear = system.GetClassEquipment(player.GetPlayerClasses(system));
         if (!gear.Any()) return;
