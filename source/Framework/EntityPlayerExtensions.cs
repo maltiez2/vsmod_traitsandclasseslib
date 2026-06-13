@@ -28,7 +28,7 @@ public static class EntityPlayerExtensions
 
         if (system == null)
         {
-            return PlayerTratis.FromAttributes(player.WatchedAttributes);
+            return PlayerTratis.FromAttributes(player.WatchedAttributes, []);
         }
 
         if (system.PlayerTraitsCache.TryGetValue(player.PlayerUID, out PlayerTratis? traits))
@@ -37,7 +37,7 @@ public static class EntityPlayerExtensions
         }
         else
         {
-            traits = PlayerTratis.FromAttributes(player.WatchedAttributes);
+            traits = PlayerTratis.FromAttributes(player.WatchedAttributes, system.Traits);
             system.PlayerTraitsCache.Add(player.PlayerUID, traits);
             return traits;
         }
@@ -48,7 +48,7 @@ public static class EntityPlayerExtensions
 
         if (system == null)
         {
-            return PlayerClasses.FromAttributes(player.WatchedAttributes);
+            return PlayerClasses.FromAttributes(player.WatchedAttributes, []);
         }
 
         if (system.PlayerClassesCache.TryGetValue(player.PlayerUID, out PlayerClasses? playerClasses))
@@ -57,7 +57,7 @@ public static class EntityPlayerExtensions
         }
         else
         {
-            playerClasses = PlayerClasses.FromAttributes(player.WatchedAttributes);
+            playerClasses = PlayerClasses.FromAttributes(player.WatchedAttributes, system.Classes);
             system.PlayerClassesCache.Add(player.PlayerUID, playerClasses);
             return playerClasses;
         }
@@ -120,8 +120,8 @@ public static class EntityPlayerExtensions
         system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
         if (system == null) return;
 
-        PlayerTratis traits = PlayerTratis.FromAttributes(player.WatchedAttributes);
-        PlayerClasses classes = PlayerClasses.FromAttributes(player.WatchedAttributes);
+        PlayerTratis traits = PlayerTratis.FromAttributes(player.WatchedAttributes, system.Traits);
+        PlayerClasses classes = PlayerClasses.FromAttributes(player.WatchedAttributes, system.Classes);
 
         system.AddClassesTraits(traits, classes);
 
@@ -136,8 +136,8 @@ public static class EntityPlayerExtensions
         system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
         if (inventoryBehavior == null || renderer == null || system == null) return;
 
-        JsonItemStack[] gear = system.GetClassEquipment(player.GetPlayerClasses(system));
-        if (gear.Length == 0) return;
+        IEnumerable<JsonItemStack> gear = system.GetClassEquipment(player.GetPlayerClasses(system));
+        if (!gear.Any()) return;
 
         inventoryBehavior.doReloadShapeAndSkin = false;
         InventoryBase? inventory = inventoryBehavior.Inventory;

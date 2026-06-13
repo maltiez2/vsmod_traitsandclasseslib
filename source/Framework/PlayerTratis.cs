@@ -91,7 +91,7 @@ public class PlayerTratis
         }
     }
 
-    public void ReadFromAttributes(TreeAttribute tree, Dictionary<string, ExtendedTrait> traits)
+    public void ReadFromAttributes(TreeAttribute tree, Dictionary<string, ExtendedTrait> registeredTraits)
     {
         TraitsByCategories.Clear();
 
@@ -112,13 +112,13 @@ public class PlayerTratis
 
             foreach (string code in traitCodes.value)
             {
-                if (traits.TryGetValue(code, out ExtendedTrait? trait))
+                if (registeredTraits.TryGetValue(code, out ExtendedTrait? trait))
                 {
                     newTraits.Add(trait);
                 }
             }
 
-            if (traits.Count > 0)
+            if (registeredTraits.Count > 0)
             {
                 TraitsByCategories[category] = newTraits;
             }
@@ -148,18 +148,17 @@ public class PlayerTratis
         tree[AttributeCode] = categoriesTree;
     }
 
-    public static PlayerTratis FromAttributes(TreeAttribute tree, Dictionary<string, ExtendedTrait> traits)
+    public static PlayerTratis FromAttributes(TreeAttribute tree, Dictionary<string, ExtendedTrait> registeredTraits)
     {
         PlayerTratis result = new();
-        result.ReadFromAttributes(tree, traits);
+        result.ReadFromAttributes(tree, registeredTraits);
         return result;
     }
 
-    public static PlayerTratis FromAttributes(TreeAttribute tree)
+    public static PlayerTratis FromAttributes(TreeAttribute tree, TraitsAndClassesLibSystem system)
     {
         PlayerTratis result = new();
-        Dictionary<string, ExtendedTrait> traits = [];
-        result.ReadFromAttributes(tree, traits);
+        result.ReadFromAttributes(tree, system.Traits);
         return result;
     }
 

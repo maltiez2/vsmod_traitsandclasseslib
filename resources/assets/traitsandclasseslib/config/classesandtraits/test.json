@@ -1,65 +1,91 @@
 {
   "classCategories": [
 		{
-			"code": "vanilla",
+			"code": "game:vanilla",
 			"order": 0
 		},
 		{
-			"code": "test",
+			"code": "t-1",
 			"order": 1
 		},
 		{
-			"code": "test-2",
-			"order": 1
+			"code": "t-1.5",
+			"order": 1.5
+		},
+		{
+			"code": "t-2",
+			"order": 2
 		}
   ],
 	"classes": [
     {
 			"enabled": true,
-			"code": "hunter",
-			"category": "traitsandclasseslib:test",
-			"traits": ["game:focused", "traitsandclasseslib:focused"],
-			"gear": [
-				{ "type": "item", "code": "game:clothes-head-hunter-cape" },
-				{ "type": "item", "code": "game:clothes-shoulder-hunter-poncho" },
-				{ "type": "item", "code": "game:clothes-upperbody-hunter-shirt" },
-				{ "type": "item", "code": "game:clothes-upperbodyover-hunter-coat" },
-				{ "type": "item", "code": "game:clothes-lowerbody-hunter-leggings" },
-				{ "type": "item", "code": "game:clothes-foot-hunter-boots" },
-				{ "type": "item", "code": "game:clothes-face-hunter-mask" },
-				{ "type": "item", "code": "game:clothes-hand-hunter-gloves" }
-			]
+			"code": "c-1",
+			"category": "t-1",
+			"traits": [],
+			"gear": []
 		},
 		{
 			"enabled": true,
-			"code": "hunter-2",
-			"category": "traitsandclasseslib:test-2",
-			"traits": ["game:focused", "traitsandclasseslib:focused"],
-			"requiredTraitsAndClasses": ["traitsandclasseslib:hunter"],
-			"forbiddenTraitsAndClasses": ["game:focused"],
-			"gear": [
-				{ "type": "item", "code": "game:clothes-head-hunter-cape" },
-				{ "type": "item", "code": "game:clothes-shoulder-hunter-poncho" },
-				{ "type": "item", "code": "game:clothes-upperbody-hunter-shirt" },
-				{ "type": "item", "code": "game:clothes-upperbodyover-hunter-coat" },
-				{ "type": "item", "code": "game:clothes-lowerbody-hunter-leggings" },
-				{ "type": "item", "code": "game:clothes-foot-hunter-boots" },
-				{ "type": "item", "code": "game:clothes-face-hunter-mask" },
-				{ "type": "item", "code": "game:clothes-hand-hunter-gloves" }
-			]
+			"code": "c-2",
+			"category": "t-1",
+			"traits": [],
+			"gear": []
+		},
+		{
+			"enabled": true,
+			"code": "c-3",
+			"category": "t-1",
+			"traits": [],
+			"gear": []
+		},
+		{
+			"enabled": true,
+			"code": "c-4",
+			"category": "t-1.5",
+			"requiredTraitsAndClasses": ["c-2"],
+			"traits": [],
+			"gear": []
+		},
+		{
+			"enabled": true,
+			"code": "c-5",
+			"category": "t-1.5",
+			"requiredTraitsAndClasses": ["c-2"],
+			"traits": [],
+			"gear": []
+		},
+		{
+			"enabled": true,
+			"code": "c-6",
+			"category": "t-1.5",
+			"requiredTraitsAndClasses": ["c-3"],
+			"traits": [],
+			"gear": [],
+			"additionalGear": []
+		},
+		{
+			"enabled": true,
+			"code": "c-7",
+			"category": "t-2",
+			"traits": [],
+			"gear": []
+		},
+		{
+			"enabled": true,
+			"code": "c-8",
+			"category": "t-2",
+			"traits": [],
+			"gear": []
+		},
+		{
+			"enabled": true,
+			"code": "c-9",
+			"category": "t-2",
+			"traits": [],
+			"gear": []
 		}
 	],
 	"traits": [
-		{
-			"code": "focused",
-			"type": "positive",
-			"persistsOnDeath": true,
-			"persistsOnWorldReload": true,
-			"attributes": {
-				"rangedWeaponsDamage": 0.2,
-				"rangedWeaponsAcc": 0.3,
-				"bowDrawingStrength": 0.2
-			}
-		}
 	]
 }

@@ -1,6 +1,4 @@
-﻿using HarmonyLib;
-using Vintagestory.API.Datastructures;
-using Vintagestory.GameContent;
+﻿using Vintagestory.API.Datastructures;
 
 namespace TraitsAndClassesLib;
 
@@ -10,14 +8,20 @@ public class PlayerClasses
     public const string AttributeCode = "classesCategories";
 
 
-    public void AddClass(string category, ExtendedCharacterClass playerClass)
+    public void SetClass(string category, ExtendedCharacterClass playerClass)
     {
         ClassesByCategories[category] = playerClass;
     }
 
-    public void RemoveClass(string category)
+    public void ClearClass(string category)
     {
         ClassesByCategories.Remove(category);
+    }
+
+    public ExtendedCharacterClass? GetClass(string category)
+    {
+        ClassesByCategories.TryGetValue(category, out ExtendedCharacterClass? playerClass);
+        return playerClass;
     }
 
     public IEnumerable<ExtendedCharacterClass> GetClasses()
@@ -35,7 +39,7 @@ public class PlayerClasses
         }
     }
 
-    public void ReadFromAttributes(TreeAttribute tree, Dictionary<string, ExtendedCharacterClass> playerClasses)
+    public void ReadFromAttributes(TreeAttribute tree, Dictionary<string, List<ExtendedCharacterClass>> registeredClasses)
     {
         ClassesByCategories.Clear();
 
@@ -51,9 +55,11 @@ public class PlayerClasses
                 continue;
             }
 
-            if (playerClasses.TryGetValue(classCodeAttribute.value, out ExtendedCharacterClass? playerClass))
+            string classCode = classCodeAttribute.value;
+
+            if (registeredClasses.TryGetValue(category, out List<ExtendedCharacterClass>? playerClasses))
             {
-                ClassesByCategories[category] = playerClass;
+                ClassesByCategories[category] = playerClasses.First(playerClass => playerClass.Code == classCode);
             }
         }
     }
@@ -70,18 +76,17 @@ public class PlayerClasses
         tree[AttributeCode] = categoriesTree;
     }
 
-    public static PlayerClasses FromAttributes(TreeAttribute tree, Dictionary<string, ExtendedCharacterClass> playerClasses)
+    public static PlayerClasses FromAttributes(TreeAttribute tree, Dictionary<string, List<ExtendedCharacterClass>> registeredClasses)
     {
         PlayerClasses result = new();
-        result.ReadFromAttributes(tree, playerClasses);
+        result.ReadFromAttributes(tree, registeredClasses);
         return result;
     }
 
-    public static PlayerClasses FromAttributes(TreeAttribute tree)
+    public static PlayerClasses FromAttributes(TreeAttribute tree, TraitsAndClassesLibSystem system)
     {
         PlayerClasses result = new();
-        Dictionary<string, ExtendedCharacterClass> playerClasses = [];
-        result.ReadFromAttributes(tree, playerClasses);
+        result.ReadFromAttributes(tree, system.Classes);
         return result;
     }
 

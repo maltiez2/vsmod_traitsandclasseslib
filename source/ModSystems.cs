@@ -1,10 +1,8 @@
 ﻿using OverhaulLib.Utils;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
-using Vintagestory.API.Datastructures;
 
 namespace TraitsAndClassesLib;
-
 
 public sealed class TraitsAndClassesLibSystem : ModSystem
 {
@@ -54,14 +52,17 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
             }
         }
     }
-    public JsonItemStack[] GetClassEquipment(PlayerClasses classes)
+    public IEnumerable<JsonItemStack> GetClassEquipment(PlayerClasses classes)
     {
         ExtendedCharacterClass? classWithGear = classes.GetClasses()
             .Where(playerClass => playerClass.Gear != null && playerClass.Gear.Length > 0)
             .OrderByDescending(playerClass => ClassesCategories.FirstOrDefault(category => category.Code == playerClass.Category)?.Order ?? 0)
             .FirstOrDefault();
+        JsonItemStack[] classGear = classWithGear != null ? classWithGear.Gear : [];
 
-        return classWithGear != null ? classWithGear.Gear : [];
+        IEnumerable<JsonItemStack> additionalGear = classes.GetClasses().SelectMany(playerClass => playerClass.AdditionalGear);
+
+        return additionalGear.Concat(classGear);
     }
 
 
@@ -165,6 +166,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     private void FillMissingDomains(string domain, ExtendedCharacterClass playerClass)
     {
         playerClass.Code = AddDomainIfMissing(playerClass.Code, domain);
+        playerClass.Category = AddDomainIfMissing(playerClass.Category, domain);
         playerClass.RequiredTraitsAndClasses = playerClass.RequiredTraitsAndClasses.Select(code => AddDomainIfMissing(code, domain)).ToList();
         playerClass.ForbiddenTraitsAndClasses = playerClass.ForbiddenTraitsAndClasses.Select(code => AddDomainIfMissing(code, domain)).ToList();
     }
@@ -174,6 +176,6 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     }
     private static string AddDomainIfMissing(string value, string domain)
     {
-        return domain.Contains(':') ? value : domain + ":" + value;
+        return value.Contains(':') ? value : domain + ":" + value;
     }
 }

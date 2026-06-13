@@ -3,6 +3,7 @@ using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
 using Vintagestory.GameContent;
 
@@ -25,6 +26,7 @@ public static class ClassesTabsGui
 
 
     private static ICoreClientAPI? _api;
+    private static TreeAttribute _currentSelection = new();
 
 
     private static void OnDialogCreated(GuiDialogCreateCustomCharacter dialog)
@@ -35,18 +37,22 @@ public static class ClassesTabsGui
         foreach (ClassCategory category in system.ClassesCategories)
         {
             if (category.Code == ClassCategory.VanillaCategoryCode) continue;
-            
+
             AddTabToDialog(dialog, category);
         }
+
+        dialog.Api.World.Player.Entity.GetPlayerClasses().WriteToAttributes(_currentSelection);
+        dialog.Api.World.Player.Entity.GetPlayerTraits().WriteToAttributes(_currentSelection);
     }
 
     private static void AddTabToDialog(GuiDialogCreateCustomCharacter dialog, ClassCategory category)
     {
-        dialog.Tabs.Add(category.Code,
+        string tabCode = category.Code;
+        dialog.Tabs.Add(tabCode,
             (GuiDialogCreateCustomCharacter dialog, GuiComposer composer, double yPosition, double padding, double slotSize, ElementBounds backgroundBounds, ElementBounds dialogBounds) =>
                 ComposeTab(category, dialog, composer, yPosition, padding, slotSize, backgroundBounds, dialogBounds));
-        dialog.TabsEnabled.Add(category.Code, true);
-        dialog.OnRenderIntoTab.Add(category.Code, OnRenderPlayerModelToTab);
+        dialog.TabsEnabled.Add(tabCode, true);
+        dialog.OnRenderIntoTab.Add(tabCode, OnRenderPlayerModelToTab);
     }
 
     private static void ComposeTab(ClassCategory category, GuiDialogCreateCustomCharacter dialog, GuiComposer composer, double yPosition, double padding, double slotSize, ElementBounds backgroundBounds, ElementBounds dialogBounds)
@@ -79,10 +85,10 @@ public static class ClassesTabsGui
 
         composer
             .AddInset(dialog.InsetSlotBounds, 2)
-            .AddIconButton("left", (on) => dialog.ChangeClass(-1), prevButtonBounds.FlatCopy())
+            .AddIconButton("left", (on) => ChangeClass(category, dialog , - 1), prevButtonBounds.FlatCopy())
             .AddInset(charclasssInset, 2)
             .AddDynamicText("Commoner", font.Clone().WithOrientation(EnumTextOrientation.Center), centerTextBounds, "className")
-            .AddIconButton("right", (on) => dialog.ChangeClass(1), nextButtonBounds.FlatCopy())
+            .AddIconButton("right", (on) => ChangeClass(category, dialog, 1), nextButtonBounds.FlatCopy())
 
             .BeginChildElements(bgBounds)
                 .AddInset(bgBounds.FlatCopy(), 3)
@@ -94,8 +100,7 @@ public static class ClassesTabsGui
 
             .AddSmallButton(Lang.Get("Confirm Class"), dialog.OnNextImpl,
                 ElementBounds.Fixed(11, GuiDialogCreateCustomCharacter.DlgHeight - 24).WithAlignment(EnumDialogArea.RightFixed).WithFixedPadding(12, 6),
-                EnumButtonStyle.Normal)
-        ;
+                EnumButtonStyle.Normal);
 
         dialog.ClipHeight = (float)clipBounds.fixedHeight;
         composer.GetScrollbar("scrollbar").SetHeights(
@@ -104,56 +109,75 @@ public static class ClassesTabsGui
         );
         composer.GetScrollbar("scrollbar").SetScrollbarPosition(0);
 
-        ChangeClass(dialog, 0);
+        ChangeClass(category, dialog);
 
         dialog.OnToggleDressOnOff(false);
     }
 
-    public static void ChangeClass(GuiDialogCreateCustomCharacter dialog, int dir)
+    private static void ChangeClass(ClassCategory category, GuiDialogCreateCustomCharacter dialog, int indexDiff = 0)
     {
         PlayerSkinBehavior? skinMod = dialog.Api.World.Player.Entity.GetBehavior<PlayerSkinBehavior>();
-        CustomModelsSystem system = dialog.Api.ModLoader.GetModSystem<CustomModelsSystem>();
+        TraitsAndClassesLibSystem? system = _api?.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
+        if (system == null || skinMod == null) return;
 
-        if (skinMod == null) return;
+        if (!system.Classes.ContainsKey(category.Code)) return;
 
-        List<CharacterClass> availableClasses = dialog.GetAvailableClasses(system, skinMod.CurrentModelCode);
+        EntityPlayer player = dialog.Api.World.Player.Entity;
 
-        dialog.CurrentClassIndex = GameMath.Mod(dialog.CurrentClassIndex + dir, availableClasses.Count);
+        GetAvailableClasses(system, _currentSelection, player, out HashSet<string> availableCategories, out HashSet<string> availableClassesCodes);
 
-        CharacterClass chclass = availableClasses[dialog.CurrentClassIndex];
-        dialog.Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + chclass.Code));
+        List<ExtendedCharacterClass> availableClasses = system.Classes[category.Code].Where(playerClass => availableClassesCodes.Contains(playerClass.Code)).ToList();
+
+        if (availableClasses.Count == 0) return;
+
+        PlayerClasses playerClasses = PlayerClasses.FromAttributes(_currentSelection, system);
+        PlayerTratis playerTratis = PlayerTratis.FromAttributes(_currentSelection, system);
+
+        ExtendedCharacterClass? currentClass = playerClasses.GetClass(category.Code);
+        if (currentClass == null)
+        {
+            currentClass = availableClasses.First();
+            playerClasses.SetClass(category.Code, currentClass);
+            playerClasses.WriteToAttributes(_currentSelection);
+            ClearLaterClassCategories(system, _currentSelection, category.Code);
+        }
+
+        if (indexDiff != 0)
+        {
+            int currentIndex = availableClasses.IndexOf(currentClass);
+            currentIndex = (currentIndex + indexDiff) % availableClasses.Count;
+            if (currentIndex < 0)
+            {
+                currentIndex += availableClasses.Count;
+            }
+            currentClass = availableClasses[currentIndex];
+            playerClasses.SetClass(category.Code, currentClass);
+            playerClasses.WriteToAttributes(_currentSelection);
+            ClearLaterClassCategories(system, _currentSelection, category.Code);
+            ReenableTabs(dialog);
+            dialog.ComposeGuis();
+        }
+
+        dialog.Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + currentClass.Code.Replace(':', '-')));
 
         StringBuilder fulldesc = new();
 
         fulldesc.AppendLine();
-        fulldesc.AppendLine(Lang.Get("characterdesc-" + chclass.Code));
+        fulldesc.AppendLine(Lang.Get("characterdesc-" + currentClass.Code.Replace(':', '-')));
         fulldesc.AppendLine();
         fulldesc.AppendLine(Lang.Get("traits-title"));
 
 
-        IOrderedEnumerable<Trait> chartraitsExtra = dialog.CustomModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits
-            .Where(dialog.CharacterSystem.TraitsByCode.ContainsKey)
-            .Select(code => dialog.CharacterSystem.TraitsByCode[code])
-            .OrderBy(trait => (int)trait.Type);
-        IOrderedEnumerable<Trait> chartraits = chclass.Traits
-            .Where(code => !dialog.CustomModelsSystem.CustomModels[skinMod.CurrentModelCode].ExtraTraits.Contains(code))
-            .Where(dialog.CharacterSystem.TraitsByCode.ContainsKey)
-            .Select(code => dialog.CharacterSystem.TraitsByCode[code])
+        IOrderedEnumerable<Trait> chartraits = currentClass.Traits
+            .Where(system.Traits.ContainsKey)
+            .Select(code => system.Traits[code])
             .OrderBy(trait => (int)trait.Type);
 
         GuiDialogCreateCustomCharacter.AppendTraits(fulldesc, chartraits);
 
-        if (chclass.Traits.Length == 0)
+        if (currentClass.Traits.Length == 0)
         {
             fulldesc.AppendLine(Lang.Get("No positive or negative traits"));
-        }
-
-        if (chartraitsExtra.Any())
-        {
-            fulldesc.AppendLine();
-            fulldesc.AppendLine(Lang.Get("model-traits-title"));
-
-            GuiDialogCreateCustomCharacter.AppendTraits(fulldesc, chartraitsExtra);
         }
 
         fulldesc.AppendLine();
@@ -166,7 +190,7 @@ public static class ClassesTabsGui
         );
         dialog.Composer?.GetScrollbar("scrollbar")?.SetScrollbarPosition(0);
 
-        dialog.CharacterSystem.setCharacterClass(dialog.Api.World.Player.Entity, chclass.Code, true);
+        //dialog.CharacterSystem.setCharacterClass(dialog.Api.World.Player.Entity, currentClass.Code, true);
 
         dialog.ReTesselate();
     }
@@ -197,12 +221,12 @@ public static class ClassesTabsGui
         TraitsAndClassesLibSystem? system = _api?.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
         if (player == null || system == null) return;
 
-        GetAvailableClasses(system, player, out HashSet<string> availableCategories, out _);
+        GetAvailableClasses(system, _currentSelection, player, out HashSet<string> availableCategories, out _);
 
         foreach ((string tabCode, _) in dialog.TabsEnabled)
         {
             if (!system.ClassesCategories.Any(tab => tab.Code == tabCode)) continue;
-            
+
             if (availableCategories.Contains(tabCode))
             {
                 dialog.TabsEnabled[tabCode] = true;
@@ -214,18 +238,71 @@ public static class ClassesTabsGui
         }
     }
 
-    private static void GetAvailableClasses(TraitsAndClassesLibSystem system, EntityPlayer player, out HashSet<string> availableCategories, out HashSet<string> availableClasses)
+    private static void ClearLaterClassCategories(TraitsAndClassesLibSystem system, TreeAttribute attributes, string currentCategory)
     {
-        IEnumerable<string> traits = player.GetTraits(system).Select(trait => trait.Code);
+        PlayerTratis traits = PlayerTratis.FromAttributes(attributes, system);
+        PlayerClasses classes = PlayerClasses.FromAttributes(attributes, system);
+        IEnumerable<string> categories = system.ClassesCategories.OrderBy(category => category.Order).Select(category => category.Code);
+
+        bool reachedCurrent = false;
+        foreach (string category in categories)
+        {
+            if (category == currentCategory)
+            {
+                reachedCurrent = true;
+                continue;
+            }
+            if (!reachedCurrent) continue;
+
+            classes.ClearClass(category);
+        }
+        system.AddClassesTraits(traits, classes);
+        traits.WriteToAttributes(attributes);
+        classes.WriteToAttributes(attributes);
+    }
+
+    private static void GetAvailableClasses(TraitsAndClassesLibSystem system, TreeAttribute attributes, EntityPlayer player, out HashSet<string> availableCategories, out HashSet<string> availableClasses)
+    {
+        PlayerTratis traits = PlayerTratis.FromAttributes(attributes, system);
+        PlayerClasses classes = PlayerClasses.FromAttributes(attributes, system);
+        IEnumerable<ExtendedTrait> extraTraits = player.GetExtraTraits(system);
 
         availableClasses = [];
         availableCategories = [];
+
+        IEnumerable<string> categories = system.ClassesCategories.OrderBy(category => category.Order).Select(category => category.Code);
+
+        HashSet<string> previousCategories = [];
+        foreach (string category in categories)
+        {
+            if (!system.Classes.TryGetValue(category, out List<ExtendedCharacterClass>? categoryClasses)) continue;
+
+            List<string> previousClassesAndTraits = extraTraits.Select(trait => trait.Code).ToList();
+            foreach (string previousCategory in previousCategories)
+            {
+                ExtendedCharacterClass? previousClass = classes.GetClass(previousCategory);
+                if (previousClass == null) continue;
+
+                previousClassesAndTraits.Add(previousClass.Code);
+                previousClassesAndTraits = previousClassesAndTraits.Concat(previousClass.Traits).ToList();
+            }
+
+            foreach (ExtendedCharacterClass playerClass in categoryClasses)
+            {
+                if (ClassAvailable(playerClass, previousClassesAndTraits))
+                {
+                    availableClasses.Add(playerClass.Code);
+                    availableCategories.Add(category);
+                    previousCategories.Add(category);
+                }
+            }
+        }
 
         foreach ((string categoryCode, List<ExtendedCharacterClass> categoryClasses) in system.Classes)
         {
             foreach (ExtendedCharacterClass playerClass in categoryClasses)
             {
-                if (ClassAvailable(playerClass, traits))
+                if (playerClass.RequiredTraitsAndClasses.Count == 0 && playerClass.ForbiddenTraitsAndClasses.Count == 0)
                 {
                     availableClasses.Add(playerClass.Code);
                     availableCategories.Add(categoryCode);
