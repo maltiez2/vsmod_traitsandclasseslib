@@ -36,10 +36,10 @@ public static class ClassesTabsGui
 
         foreach (ClassCategory category in system.ClassesCategories)
         {
-            if (category.Code == ClassCategory.VanillaCategoryCode) continue;
-
             AddTabToDialog(dialog, category);
         }
+
+        dialog.TabsEnabled["class"] = false;
 
         dialog.Api.World.Player.Entity.GetPlayerClasses().WriteToAttributes(_currentSelection);
         dialog.Api.World.Player.Entity.GetPlayerTraits().WriteToAttributes(_currentSelection);
@@ -158,15 +158,14 @@ public static class ClassesTabsGui
             dialog.ComposeGuis();
         }
 
-        dialog.Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + currentClass.Code.Replace(':', '-')));
+        dialog.Composers["createcharacter"]?.GetDynamicText("className").SetNewText(Lang.Get("characterclass-" + GuiDialogCreateCustomCharacter.ProcessDomainForLang(currentClass.Code)));
 
         StringBuilder fulldesc = new();
 
         fulldesc.AppendLine();
-        fulldesc.AppendLine(Lang.Get("characterdesc-" + currentClass.Code.Replace(':', '-')));
+        fulldesc.AppendLine(Lang.Get("characterdesc-" + GuiDialogCreateCustomCharacter.ProcessDomainForLang(currentClass.Code)));
         fulldesc.AppendLine();
         fulldesc.AppendLine(Lang.Get("traits-title"));
-
 
         IOrderedEnumerable<Trait> chartraits = currentClass.Traits
             .Where(system.Traits.ContainsKey)
@@ -190,7 +189,7 @@ public static class ClassesTabsGui
         );
         dialog.Composer?.GetScrollbar("scrollbar")?.SetScrollbarPosition(0);
 
-        //dialog.CharacterSystem.setCharacterClass(dialog.Api.World.Player.Entity, currentClass.Code, true);
+        system.SetPlayerClass(player, playerClasses, giveClassEquipment: true);
 
         dialog.ReTesselate();
     }

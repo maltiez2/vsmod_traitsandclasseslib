@@ -1,6 +1,8 @@
 ﻿using OverhaulLib.Utils;
+using ProperVersion;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.API.Server;
 
 namespace TraitsAndClassesLib;
 
@@ -65,15 +67,35 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
         return additionalGear.Concat(classGear);
     }
 
+    public void SetPlayerClass(EntityPlayer player, PlayerClasses classes, bool giveClassEquipment = false)
+    {
+        if (_clientSyncronizer != null)
+        {
+            _clientSyncronizer.SetPlayerClass(player, classes, giveClassEquipment, this);
+        }
+        else
+        {
+            _serverSyncronizer?.SetPlayerClass(player, classes, giveClassEquipment, this);
+        }
+    }
+
 
     public override void Start(ICoreAPI api)
     {
         _api = api;
     }
+    public override void StartClientSide(ICoreClientAPI api)
+    {
+        _clientSyncronizer = new(api);
+    }
+    public override void StartServerSide(ICoreServerAPI api)
+    {
+        _serverSyncronizer = new(api);
+    }
     public override void AssetsFinalize(ICoreAPI api)
     {
-        LoadVanillaTraitsAndClasses(api);
         LoadTraitsAndClassesFromAssets(api);
+        LoadVanillaTraitsAndClasses(api);
 
         if (api is ICoreClientAPI clientApi)
         {
@@ -89,6 +111,8 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
 
 
     private ICoreAPI? _api;
+    private ClassesSynchronisationSystemClient? _clientSyncronizer;
+    private ClassesSynchronisationSystemServer? _serverSyncronizer;
 
     private void LoadVanillaTraitsAndClasses(ICoreAPI api)
     {
@@ -111,6 +135,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
 
         foreach (ExtendedCharacterClass playerClass in playerClasses)
         {
+            playerClass.Category = ClassCategory.VanillaCategoryCode;
             FillMissingDomains(asset.Location.Domain, playerClass);
             RegisterClass(playerClass);
         }
@@ -167,6 +192,7 @@ public sealed class TraitsAndClassesLibSystem : ModSystem
     {
         playerClass.Code = AddDomainIfMissing(playerClass.Code, domain);
         playerClass.Category = AddDomainIfMissing(playerClass.Category, domain);
+        playerClass.Traits = playerClass.Traits.Select(code => AddDomainIfMissing(code, domain)).ToArray();
         playerClass.RequiredTraitsAndClasses = playerClass.RequiredTraitsAndClasses.Select(code => AddDomainIfMissing(code, domain)).ToList();
         playerClass.ForbiddenTraitsAndClasses = playerClass.ForbiddenTraitsAndClasses.Select(code => AddDomainIfMissing(code, domain)).ToList();
     }
