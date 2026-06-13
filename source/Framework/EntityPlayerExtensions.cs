@@ -33,6 +33,7 @@ public static class EntityPlayerExtensions
 
         return PlayerTratis.FromAttributes(player.WatchedAttributes, system.Traits);
 
+        // @TODO fix cache
         if (system.PlayerTraitsCache.TryGetValue(player.PlayerUID, out PlayerTratis? traits))
         {
             return traits;
@@ -55,6 +56,7 @@ public static class EntityPlayerExtensions
 
         return PlayerClasses.FromAttributes(player.WatchedAttributes, system.Classes);
 
+        // @TODO fix cache
         if (system.PlayerClassesCache.TryGetValue(player.PlayerUID, out PlayerClasses? playerClasses))
         {
             return playerClasses;
@@ -135,7 +137,6 @@ public static class EntityPlayerExtensions
     public static void GiveClassEquipment(this EntityPlayer player, TraitsAndClassesLibSystem? system = null)
     {
         EntityBehaviorPlayerInventory? inventoryBehavior = player.GetBehavior<EntityBehaviorPlayerInventory>();
-        EntityShapeRenderer? renderer = player.Properties.Client.Renderer as EntityShapeRenderer;
         system ??= player.Api.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
         if (inventoryBehavior == null || system == null) return;
 
@@ -184,7 +185,7 @@ public static class EntityPlayerExtensions
             inventory[(int)dressType].MarkDirty();
         }
 
-        if (renderer != null)
+        if (player.Properties.Client.Renderer is EntityShapeRenderer renderer)
         {
             inventoryBehavior.doReloadShapeAndSkin = true;
             renderer.TesselateShape();

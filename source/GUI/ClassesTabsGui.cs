@@ -33,7 +33,7 @@ public static class ClassesTabsGui
 
 
     private static ICoreClientAPI? _api;
-    private static TreeAttribute _currentSelection = new();
+    private static readonly TreeAttribute _currentSelection = new();
 
 
     private static void OnDialogCreated(GuiDialogCreateCustomCharacter dialog)
@@ -65,9 +65,11 @@ public static class ClassesTabsGui
     private static void AddTabToDialog(GuiDialogCreateCustomCharacter dialog, ClassCategory category)
     {
         string tabCode = category.Code;
+        
         dialog.Tabs.Add(tabCode,
-            (GuiDialogCreateCustomCharacter dialog, GuiComposer composer, double yPosition, double padding, double slotSize, ElementBounds backgroundBounds, ElementBounds dialogBounds) =>
+            (dialog, composer, yPosition, padding, slotSize, backgroundBounds, dialogBounds) =>
                 ComposeTab(category, dialog, composer, yPosition, padding, slotSize, backgroundBounds, dialogBounds));
+        
         dialog.TabsEnabled.Add(tabCode, true);
         dialog.OnRenderIntoTab.Add(tabCode, OnRenderPlayerModelToTab);
     }
@@ -137,13 +139,13 @@ public static class ClassesTabsGui
         TraitsAndClassesLibSystem? system = _api?.ModLoader.GetModSystem<TraitsAndClassesLibSystem>();
         if (system == null || skinMod == null) return;
 
-        if (!system.Classes.ContainsKey(category.Code)) return;
+        if (!system.Classes.TryGetValue(category.Code, out List<ExtendedCharacterClass>? value)) return;
 
         EntityPlayer player = dialog.Api.World.Player.Entity;
 
         GetAvailableClasses(system, _currentSelection, player, out HashSet<string> availableCategories, out HashSet<string> availableClassesCodes);
 
-        List<ExtendedCharacterClass> availableClasses = system.Classes[category.Code].Where(playerClass => availableClassesCodes.Contains(playerClass.Code)).ToList();
+        List<ExtendedCharacterClass> availableClasses = value.Where(playerClass => availableClassesCodes.Contains(playerClass.Code)).ToList();
 
         if (availableClasses.Count == 0) return;
 
@@ -216,6 +218,8 @@ public static class ClassesTabsGui
 
     private static void OnRenderPlayerModelToTab(GuiDialogCreateCustomCharacter dialog, float deltaTime)
     {
+        if (dialog.InsetSlotBounds == null) return;
+        
         double pad = GuiElement.scaled(GuiElementItemSlotGridBase.unscaledSlotPadding);
 
         dialog.Api.Render.RenderEntityToGui(

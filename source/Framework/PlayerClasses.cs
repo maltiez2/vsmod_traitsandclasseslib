@@ -27,7 +27,7 @@ public class PlayerClasses
     public IEnumerable<ExtendedCharacterClass> GetClasses()
     {
         HashSet<string> returnedPlayerClasses = [];
-        foreach ((string category, ExtendedCharacterClass playerClass) in ClassesByCategories)
+        foreach ((_, ExtendedCharacterClass playerClass) in ClassesByCategories)
         {
             if (returnedPlayerClasses.Contains(playerClass.Code))
             {
